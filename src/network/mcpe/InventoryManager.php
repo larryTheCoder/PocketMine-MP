@@ -45,7 +45,6 @@ use pocketmine\network\mcpe\protocol\InventoryContentPacket;
 use pocketmine\network\mcpe\protocol\InventorySlotPacket;
 use pocketmine\network\mcpe\protocol\MobEquipmentPacket;
 use pocketmine\network\mcpe\protocol\types\inventory\ContainerIds;
-use pocketmine\network\mcpe\protocol\types\inventory\CreativeContentEntry;
 use pocketmine\network\mcpe\protocol\types\inventory\ItemStackWrapper;
 use pocketmine\network\mcpe\protocol\types\inventory\WindowTypes;
 use pocketmine\player\Player;
@@ -270,11 +269,6 @@ class InventoryManager{
 	}
 
 	public function syncCreative() : void{
-		$typeConverter = TypeConverter::getInstance();
-
-		$nextEntryId = 1;
-		$this->session->sendDataPacket(CreativeContentPacket::create(array_map(function(Item $item) use($typeConverter, &$nextEntryId) : CreativeContentEntry{
-			return new CreativeContentEntry($nextEntryId++, $typeConverter->coreItemStackToNet($item));
-		}, $this->player->isSpectator() ? [] : CreativeInventory::getInstance()->getAll())));
+		$this->session->sendDataPacket(CreativeContentPacket::create(CreativeInventory::getInstance()->getCreativeContents($this->player->isSpectator())));
 	}
 }

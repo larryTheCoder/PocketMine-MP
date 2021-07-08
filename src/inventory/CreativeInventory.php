@@ -25,6 +25,8 @@ namespace pocketmine\inventory;
 
 use pocketmine\item\Durable;
 use pocketmine\item\Item;
+use pocketmine\network\mcpe\convert\TypeConverter;
+use pocketmine\network\mcpe\protocol\types\inventory\CreativeContentEntry;
 use pocketmine\utils\SingletonTrait;
 use Webmozart\PathUtil\Path;
 use function file_get_contents;
@@ -32,6 +34,9 @@ use function json_decode;
 
 final class CreativeInventory{
 	use SingletonTrait;
+
+	/** @var CreativeContentEntry[]|null */
+	private static $creativeContents = null;
 
 	/** @var Item[] */
 	private $creative = [];
@@ -53,6 +58,8 @@ final class CreativeInventory{
 	 * Note: Players who are already online when this is called will not see this change.
 	 */
 	public function clear() : void{
+		self::$creativeContents = null;
+
 		$this->creative = [];
 	}
 
@@ -78,10 +85,30 @@ final class CreativeInventory{
 	}
 
 	/**
+	 * @param bool $isSpectator
+	 * @return CreativeContentEntry[]
+	 * @internal
+	 */
+	public function getCreativeContents(bool $isSpectator) : array{
+		if(self::$creativeContents === null){
+			$typeConverter = TypeConverter::getInstance();
+
+			$nextEntryId = 1;
+			self::$creativeContents = array_map(function(Item $item) use ($typeConverter, &$nextEntryId): CreativeContentEntry{
+				return new CreativeContentEntry($nextEntryId++, $typeConverter->coreItemStackToNet($item));
+			}, $this->getAll());
+		}
+
+		return $isSpectator ? [] : self::$creativeContents;
+	}
+
+	/**
 	 * Adds an item to the creative menu.
 	 * Note: Players who are already online when this is called will not see this change.
 	 */
 	public function add(Item $item) : void{
+		self::$creativeContents = null;
+
 		$this->creative[] = clone $item;
 	}
 
@@ -92,6 +119,8 @@ final class CreativeInventory{
 	public function remove(Item $item) : void{
 		$index = $this->getItemIndex($item);
 		if($index !== -1){
+			self::$creativeContents = null;
+
 			unset($this->creative[$index]);
 		}
 	}
