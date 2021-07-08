@@ -36,8 +36,7 @@ final class CreativeInventory{
 	use SingletonTrait;
 
 	/** @var CreativeContentEntry[]|null */
-	private static $creativeContents = null;
-
+	private $creativeContents = null;
 	/** @var Item[] */
 	private $creative = [];
 
@@ -58,8 +57,7 @@ final class CreativeInventory{
 	 * Note: Players who are already online when this is called will not see this change.
 	 */
 	public function clear() : void{
-		self::$creativeContents = null;
-
+		$this->creativeContents = null;
 		$this->creative = [];
 	}
 
@@ -90,16 +88,16 @@ final class CreativeInventory{
 	 * @internal
 	 */
 	public function getCreativeContents(bool $isSpectator) : array{
-		if(self::$creativeContents === null){
+		if($this->creativeContents === null){
 			$typeConverter = TypeConverter::getInstance();
 
 			$nextEntryId = 1;
-			self::$creativeContents = array_map(function(Item $item) use ($typeConverter, &$nextEntryId): CreativeContentEntry{
+			$this->creativeContents = array_map(function(Item $item) use ($typeConverter, &$nextEntryId): CreativeContentEntry{
 				return new CreativeContentEntry($nextEntryId++, $typeConverter->coreItemStackToNet($item));
 			}, $this->getAll());
 		}
 
-		return $isSpectator ? [] : self::$creativeContents;
+		return $isSpectator ? [] : $this->creativeContents;
 	}
 
 	/**
@@ -107,7 +105,7 @@ final class CreativeInventory{
 	 * Note: Players who are already online when this is called will not see this change.
 	 */
 	public function add(Item $item) : void{
-		self::$creativeContents = null;
+		$this->creativeContents = null;
 
 		$this->creative[] = clone $item;
 	}
@@ -119,7 +117,7 @@ final class CreativeInventory{
 	public function remove(Item $item) : void{
 		$index = $this->getItemIndex($item);
 		if($index !== -1){
-			self::$creativeContents = null;
+			$this->creativeContents = null;
 
 			unset($this->creative[$index]);
 		}
