@@ -78,6 +78,8 @@ class PopulationTask extends AsyncTask{
 	}
 
 	public function onRun() : void{
+		$start1 = memory_get_usage(false);
+		$start2 = memory_get_usage(true);
 		$context = ThreadLocalGeneratorContext::fetch($this->worldId);
 		if($context === null){
 			throw new AssumptionFailedError("Generator context should have been initialized before any PopulationTask execution");
@@ -122,15 +124,26 @@ class PopulationTask extends AsyncTask{
 			}
 		}
 
+		$c_end1 = memory_get_usage(false);
+		$c_end2 = memory_get_usage(true);
+
 		$generator->populateChunk($manager, $this->chunkX, $this->chunkZ);
 		$chunk = $manager->getChunk($this->chunkX, $this->chunkZ);
 		$chunk->setPopulated();
+
+		$p_end1 = memory_get_usage(false);
+		$p_end2 = memory_get_usage(true);
 
 		$this->chunk = FastChunkSerializer::serializeWithoutLight($chunk);
 
 		foreach($chunks as $i => $c){
 			$this->{"chunk$i"} = $c->isDirty() ? FastChunkSerializer::serializeWithoutLight($c) : null;
 		}
+
+		$end1 = memory_get_usage(false);
+		$end2 = memory_get_usage(true);
+
+		print "Memory usage: $start1 $c_end1 $p_end1 $end1  $start2 $c_end2 $p_end2 $end2" . PHP_EOL;
 	}
 
 	public function onCompletion() : void{
